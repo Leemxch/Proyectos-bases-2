@@ -1,0 +1,24 @@
+  enableRabbitMQ: true
+  enableMariaDB: true
+  
+  rabbitmq:
+    auth:
+      # Se agrega un password fija para installar/desinstalar
+      password: "rabbitmqpass"
+    # Habilitar el servicio de monitoreo
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+  # --------------------------------------------------------------------
+  mariadb:
+    auth:
+      # Se agrega un password fija para installar/desinstalar
+      rootPassword: "mariadbpass"
+      username: "user"
+      password: "user"
+    # Habilitar el servicio de monitoreo
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
