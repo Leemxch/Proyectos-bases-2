@@ -13,3 +13,4 @@
       rootPassword: "mariadbpass"
       username: "user"
       password: "user"
+      database: "weather"

@@ -9,11 +9,21 @@ spec:
       template:
         spec:
           containers:
-          - name: hello
-            image: busybox:1.28
-            imagePullPolicy: IfNotPresent
-            command:
-            - /bin/sh
-            - -c
-            - date; echo Hello from the Kubernetes cluster
+          - name: countries
+            image: basesdedatos2/countries
+            env:
+            - name: MARIAHOST
+              value: "databases-mariadb"
+            - name: MARIAPORT
+              value: "3306"
+            - name: MARIAUSER
+              value: "user"
+            - name: MARIADB
+              value: "my_database"
+            - name: MARIAPASS
+              valueFrom:
+                secretKeyRef:
+                  name: databases-mariadb
+                  key: mariadb-password
+                  optional: false
           restartPolicy: OnFailure
