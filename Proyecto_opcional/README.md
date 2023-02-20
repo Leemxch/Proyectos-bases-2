@@ -5,6 +5,7 @@
 * Max Richard Lee Chung - 2019185076 
 * Miguel Ku Liang - 2019061913
 * Adriel Araya Vargas -2019312845
+* André Araya Vargas - 2020142856
 
 ## Referencias
 * https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-overview.html
