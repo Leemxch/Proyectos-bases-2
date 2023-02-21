@@ -11,8 +11,8 @@ countries = countriesData.split('\\n')
 
 countriesRows = []
 for i in countries:
-    if (len(i) == 2):
-        rowData = i.split(' ', 1)
+    rowData = i.split(' ', 1)
+    if (len(rowData) == 2):
         countriesRows += [rowData]
         print(rowData)
 
@@ -24,8 +24,8 @@ states = statesData.split('\\n')
 
 statesRows = []
 for i in states:
-    if (len(i) == 2):
-        rowData = i.split(' ', 1)
+    rowData = i.split(' ', 1)
+    if (len(rowData) == 2):
         statesRows += [rowData]
         print(rowData)
 '''
