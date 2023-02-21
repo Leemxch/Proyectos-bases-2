@@ -6,26 +6,28 @@ import mariadb
 # Get the countries from the NOAA wensite data
 requestCountries = requests.get("https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt")
 requestCountriesData = str(requestCountries.content)
-countriesData = requestCountriesData[2:len(requestCountriesData)-4]
+countriesData = requestCountriesData[2:len(requestCountriesData)]
 countries = countriesData.split('\\n')
 
 countriesRows = []
 for i in countries:
-    rowData = i.split(' ', 1)
-    countriesRows += [rowData]
-    #print(rowData)
+    if (len(i) == 2):
+        rowData = i.split(' ', 1)
+        countriesRows += [rowData]
+        print(rowData)
 
 # Get the states from the NOAA website data
 requestStates = requests.get("https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-states.txt")
 requestStatesData = str(requestStates.content)
-statesData = requestStatesData[2:len(requestStatesData)-4]
+statesData = requestStatesData[2:len(requestStatesData)-3]
 states = statesData.split('\\n')
 
 statesRows = []
 for i in states:
-    rowData = i.split(' ', 1)
-    statesRows += [rowData]
-    #print(rowData)
+    if (len(i) == 2):
+        rowData = i.split(' ', 1)
+        statesRows += [rowData]
+        print(rowData)
 '''
 # Database connection 
 MARIAHOST = os.getenv('MARIAHOST')
@@ -84,14 +86,18 @@ connection.execute("CREATE TABLE IF NOT EXISTS files(\
                    primary key(file_id)\
 )")
 
-# Crear request para insertar el pais
-'''for i in countriesRows:
+# Crear request para insertar el pais y estado
+for i in countriesRows:
     connection.execute("INSERT INTO countries(country_name,country_acronym) \
-                      VALUES (?,?)",(i[1], i[0]))
-'''
+                        SELECT * FROM (SELECT ? as country_name,? as country_acronym) AS tmp\
+                        WHERE NOT EXISTS (SELECT country_acronym FROM countries WHERE country_acronym = ?)\
+                        LIMIT 1",(i[1], i[0], i[0]))
+
 for i in statesRows:
     connection.execute("INSERT INTO states(state_name,state_acronym) \
-                      VALUES (?,?)",(i[1], i[0]))
+                        SELECT * FROM (SELECT ? as state_name,? as state_acronym) AS tmp\
+                        WHERE NOT EXISTS (SELECT state_acronym FROM states WHERE state_acronym = ?)\
+                        LIMIT 1",(i[1], i[0], i[0]))
 
 mariaDatabase.commit()
 mariaDatabase.close()
