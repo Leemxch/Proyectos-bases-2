@@ -14,3 +14,5 @@
 * https://github.com/StefWalker/BD2-TareaCorta1
 * https://stackoverflow.com/questions/50169576/mysql-8-0-11-error-connect-to-caching-sha2-password-the-specified-module-could-n
 * https://stackoverflow.com/questions/1361340/how-can-i-do-insert-if-not-exists-in-mysql
+* https://www.geeksforgeeks.org/md5-hash-python/
+* 
