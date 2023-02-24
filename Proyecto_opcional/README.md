@@ -1,11 +1,10 @@
 # Proyecto opcional: WindyUI
 > Integrantes:
->
->> 
-* Max Richard Lee Chung - 2019185076 
-* Miguel Ku Liang - 2019061913
-* Adriel Araya Vargas -2019312845
-* André Araya Vargas - 2020142856
+>* Max Richard Lee Chung - 2019185076 
+>* Miguel Ku Liang - 2019061913
+>* Adriel Araya Vargas -2019312845
+>* André Araya Vargas - 2020142856
+
 
 ## Referencias
 * https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-overview.html
@@ -13,6 +12,7 @@
 * https://github.com/bitnami/charts/tree/main/bitnami/rabbitmq
 * https://github.com/StefWalker/BD2-TareaCorta1
 * https://stackoverflow.com/questions/50169576/mysql-8-0-11-error-connect-to-caching-sha2-password-the-specified-module-could-n
+* https://mariadb.com/docs/skysql/connect/programming-languages/python/install/#TOP
 * https://stackoverflow.com/questions/1361340/how-can-i-do-insert-if-not-exists-in-mysql
 * https://www.geeksforgeeks.org/md5-hash-python/
 * 
