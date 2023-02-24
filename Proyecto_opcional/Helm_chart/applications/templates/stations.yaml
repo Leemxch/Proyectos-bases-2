@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: stations
+spec:
+  schedule: "* * * * *"   ##  0 0 * * * -> a la hora 0 todos los dias
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: stations
+            image: basesdedatos2/stations
+            env:
+            - name: MARIAHOST
+              value: "databases-mariadb"
+            - name: MARIAPORT
+              value: "3306"
+            - name: MARIAUSER
+              value: "user"
+            - name: MARIADB
+              value: "weather"
+            - name: MARIAPASS
+              valueFrom:
+                secretKeyRef:
+                  name: databases-mariadb
+                  key: mariadb-password
+                  optional: false
+          restartPolicy: OnFailure
