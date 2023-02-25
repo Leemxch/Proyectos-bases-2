@@ -15,4 +15,5 @@
 * https://mariadb.com/docs/skysql/connect/programming-languages/python/install/#TOP
 * https://stackoverflow.com/questions/1361340/how-can-i-do-insert-if-not-exists-in-mysql
 * https://www.geeksforgeeks.org/md5-hash-python/
+* https://www.digitalocean.com/community/tutorials/how-to-store-and-retrieve-data-in-mariadb-using-python-on-ubuntu-18-04
 * 

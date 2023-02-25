@@ -92,11 +92,11 @@ try:
             for country in countries:
                 if i[0][0:2] == country[1]:
                     connection.execute("UPDATE stations SET country_id = ? \
-                    WHERE station_id = ?", country[0], i[0])
+                    WHERE station_id = ?", (country[0], i[0]))
             for state in states:
                 if i[0][0:2] == state[1]:
                     connection.execute("UPDATE stations SET state_id = ? \
-                    WHERE station_id = ?", state[0], i[0])
+                    WHERE station_id = ?", (state[0], i[0]))
 
     # Close connection
     mariaDatabase.commit()
