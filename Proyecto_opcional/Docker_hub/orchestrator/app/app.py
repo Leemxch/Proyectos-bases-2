@@ -9,12 +9,10 @@ import hashlib
 import json
 import mariadb
 
-'''
 hostname = os.getenv('HOSTNAME')
-interval = int(os.getenv('EVENT_INTERVAL'))
-RABBIT_MQ=os.getenv('RABBITMQ')
-RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
-OUTPUT_QUEUE=os.getenv('OUTPUT_QUEUE')
+RABBIT_MQ = os.getenv('RABBITMQ')
+RABBIT_MQ_PASSWORD = os.getenv('RABBITPASS')
+OUTPUT_QUEUE = os.getenv('OUTPUT_QUEUE')
 
 credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
 parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
@@ -22,16 +20,19 @@ connection = pika.BlockingConnection(parameters)
 channel = connection.channel()
 channel.queue_declare(queue=OUTPUT_QUEUE)
 
-'''
-
 
 def arrangeFiles(list):
     newList = []
+    fileCount = 0
+    maxFiles = 5000
     for file in list:
+        fileCount = fileCount + 1
         if file.text.find('.dly') != -1:
             newList = newList + [file.text]
             # with open('test.txt', 'a') as f:
             # f.write(file.text + '  ')
+        if fileCount == maxFiles:
+            return newList
     return newList
 
 
@@ -45,6 +46,25 @@ files.pop(0)
 
 print("Conectando a la base de datos...")
 
+
+# Database connection 
+MARIAHOST = os.getenv('MARIAHOST')
+MARIAPORT = os.getenv('MARIAPORT')
+MARIAUSER = os.getenv('MARIAUSER')
+MARIAPASS = os.getenv('MARIAPASS')
+MARIADB = os.getenv('MARIADB')
+
+# Conexion al servicio de la base de datos Mariadb
+
+mariaDatabase = mariadb.connect(
+    host=MARIAHOST,
+    port=int(MARIAPORT),
+    user=MARIAUSER, 
+    password=MARIAPASS,
+    database=MARIADB
+)
+
+'''
 mariaDatabase = mariadb.connect(
     host="localhost",
     port=3306,
@@ -52,7 +72,7 @@ mariaDatabase = mariadb.connect(
     password="gmlsdrhn2",
     database="weather"
 )
-
+'''
 print("Creando Cursor...")
 connection = mariaDatabase.cursor()
 
@@ -84,14 +104,10 @@ for file in files:
 mariaDatabase.commit()
 mariaDatabase.close()
 
-'''
-while True:
-    localtime = time.localtime()
-    result = time.strftime("%I:%M:%S %p", localtime)
-    msg = "{\"data\": [ {\"msg\":\""+result+"\", \"hostname\": \""+hostname+"\"}]}"
+for file in files:
+    result = file
+    msg = "{\"data\": [ {\"msg\":\"" + result + "\", \"hostname\": \"" + hostname + "\"}]}"
     channel.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=msg)
     print(result)
-    time.sleep(interval)
 
 connection.close()
-'''

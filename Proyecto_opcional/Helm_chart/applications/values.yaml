@@ -1,6 +1,17 @@
-# Default values for applications.
+ # Default values for applications.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+
+config:
+  orchestrator:
+    name: producer
+    output_queue: "TO_PROCESS"
+    image: basesdedatos2/orchestrator
+  processor:
+    replicas: 1
+    name: processor
+    input_queue: "TO_PROCESS"
+    image: basesdedatos2/processor
 
 replicaCount: 1
 
@@ -80,3 +91,5 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+
