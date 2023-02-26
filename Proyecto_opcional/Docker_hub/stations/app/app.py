@@ -68,15 +68,16 @@ try:
         for i in range(0, len(stationsList) - 1):
             station = stationsList[i]
             id = station[0:11]
-            latitude = float(station[12:20])
-            longitude = float(station[21:30])
-            elevation = float(station[31:37])
+            latitude = station[12:20]
+            longitude = station[21:30]
+            elevation = station[31:37]
             state = station[38:40]
             name = station[41:71]
             gsn_flag = station[72:75]
             hcn_flag = station[76:79]
             wmo_id = station[80:85]
             stationsRows += [[id, latitude, longitude, elevation, state, name, gsn_flag, hcn_flag, wmo_id]]
+        print("inserting file")
         connection.execute("INSERT INTO files (file_name, file_url, file_date, file_state, file_md5) \
                     VALUES (?,?,?,?,?)", (stationName, urlStation, date, 'En espera', str(md5Stations.hexdigest())))
         connection.execute("SELECT country_id, country_acronym FROM countries")
@@ -92,11 +93,11 @@ try:
             for country in countries:
                 if i[0][0:2] == country[1]:
                     connection.execute("UPDATE stations SET country_id = ? \
-                    WHERE station_id = ?", country[0], i[0])
+                    WHERE station_id = ?", (str(country[0]), i[0]))
             for state in states:
                 if i[0][0:2] == state[1]:
                     connection.execute("UPDATE stations SET state_id = ? \
-                    WHERE station_id = ?", state[0], i[0])
+                    WHERE station_id = ?", (str(state[0]), i[0]))
 
     # Close connection
     mariaDatabase.commit()
