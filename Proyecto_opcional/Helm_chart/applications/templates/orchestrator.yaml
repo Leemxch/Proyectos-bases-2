@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: orchestrator
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: orchestrator
+            image: basesdedatos2/orchestrator
+            env:
+            - name: RABBITMQ
+              value: "stateful-rabbitmq"
+            - name: OUTPUT_QUEUE
+              value: {{ .Values.config.orchestrator.output_queue }}
+            - name: RABBITPASS
+              valueFrom:
+                secretKeyRef:
+                  name: stateful-rabbitmq
+                  key: rabbitmq-password
+                  optional: false
+            - name: MARIAHOST
+              value: "databases-mariadb"
+            - name: MARIAPORT
+              value: "3306"
+            - name: MARIAUSER
+              value: "user"
+            - name: MARIADB
+              value: "my_database"
+            - name: MARIAPASS
+              valueFrom:
+                secretKeyRef:
+                  name: databases-mariadb
+                  key: mariadb-password
+                  optional: false
+          restartPolicy: OnFailure
