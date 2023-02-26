@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: stations
 spec:
-  schedule: "* * * * *"   ##  0 0 * * * -> a la hora 0 todos los dias
+  schedule: "18 * * * *"   ##  0 0 * * * -> a la hora 0 todos los dias
   jobTemplate:
     spec:
       template:
