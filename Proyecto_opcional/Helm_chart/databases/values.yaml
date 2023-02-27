@@ -1,5 +1,6 @@
   enableRabbitMQ: true
   enableMariaDB: true
+  enableOperator: true
   
   rabbitmq:
     auth:
