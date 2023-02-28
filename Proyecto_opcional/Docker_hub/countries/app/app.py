@@ -43,7 +43,7 @@ for i in states:
     if (len(rowData) == 2):
         statesRows += [rowData]
         #print(rowData)
-'''
+
 # Database connection 
 MARIAHOST = os.getenv('MARIAHOST')
 MARIAPORT = os.getenv('MARIAPORT')
@@ -61,7 +61,7 @@ mariaDatabase = mariadb.connect(
     database=MARIADB
 )
 
-
+'''
 mariaDatabase = mariadb.connect(
     host="127.0.0.1",
     port=3305,
@@ -69,7 +69,7 @@ mariaDatabase = mariadb.connect(
     password="user",
     database="my_database"
 )
-'''
+
 mariaDatabase = mariadb.connect(
     host="localhost",
     port=3306,
@@ -77,7 +77,7 @@ mariaDatabase = mariadb.connect(
     password="Leemxch12345",
     database="weather"
 )
-
+'''
 
 # Create conection for the db
 connection = mariaDatabase.cursor()

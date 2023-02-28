@@ -12,7 +12,7 @@ spec:
           - name: orchestrator
             image: basesdedatos2/orchestrator
             env:
-            - name: RABBITM
+            - name: RABBITMQ
               value: "databases-rabbitmq"
             - name: OUTPUT_QUEUE
               value: {{ .Values.config.orchestrator.output_queue }}
