@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.config.parser.name }}
+  labels:
+    app: {{ .Values.config.parser.name }}
+spec:
+  replicas: {{ .Values.config.parser.image }}
+  selector:
+    matchLabels:
+      app: {{ .Values.config.parser.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.config.parser.name }}
+    spec:
+      containers:
+      - name: {{ .Values.config.parser.name }}
+        image: {{ .Values.config.parser.image }}
+        env:
+          - name: RABBITMQ
+            value: "databases-rabbitmq"
+          - name: INPUT_QUEUE
+            value: {{ .Values.config.parser.input_queue }}
+          - name: OUTPUT_QUEUE
+            value: {{ .Values.config.parser.output_queue }}
+          - name: RABBITPASS
+            valueFrom:
+              secretKeyRef:
+                name: databases-rabbitmq
+                key: rabbitmq-password
+                optional: false
+          - name: ESENDPOINT
+            value: elastic-es-default
+          - name: ESPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: elastic-es-elastic-user
+                key: elastic
+                optional: false
+          - name: ESINDEXGROUPS
+            value: groups
