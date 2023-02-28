@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processor
+  labels:
+    app: processor
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: processor
+  template:
+    metadata:
+      labels:
+        app: processor
+    spec:
+      containers:
+      - name: processor
+        image: basesdedatos2/processor
+        env:
+          - name: RABBITMQ
+            value: "databases-rabbitmq"
+          - name: INPUT_QUEUE
+            value: {{ .Values.config.processor.input_queue }}
+          - name: OUTPUT_QUEUE
+            value: {{ .Values.config.processor.output_queue }}
+          - name: RABBITPASS
+            valueFrom:
+              secretKeyRef:
+                name: databases-rabbitmq
+                key: rabbitmq-password
+                optional: false
+          - name: MARIAHOST
+            value: "databases-mariadb"
+          - name: MARIAPORT
+            value: "3306"
+          - name: MARIAUSER
+            value: "user"
+          - name: MARIADB
+            value: "weather"
+          - name: MARIAPASS
+            valueFrom:
+              secretKeyRef:
+                name: databases-mariadb
+                key: mariadb-password
+                optional: false

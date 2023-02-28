@@ -8,10 +8,18 @@ config:
     output_queue: "TO_PROCESS"
     image: basesdedatos2/orchestrator
   processor:
-    replicas: 1
-    name: processor
+    replicas: 10
+    name: consumer
     input_queue: "TO_PROCESS"
+    output_queue: "TO_PARSE" 
     image: basesdedatos2/processor
+  #parser:
+  #  replicas: 1
+   # name: parser
+    #input_queue: "TO_PARSE"
+    #output_queue: "TO_TRANSFORM"
+    #image: basesdedatos2/parser'
+
 
 replicaCount: 1
 

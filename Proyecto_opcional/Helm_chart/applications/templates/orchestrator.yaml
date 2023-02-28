@@ -12,14 +12,14 @@ spec:
           - name: orchestrator
             image: basesdedatos2/orchestrator
             env:
-            - name: RABBITMQ
-              value: "stateful-rabbitmq"
+            - name: RABBITM
+              value: "databases-rabbitmq"
             - name: OUTPUT_QUEUE
               value: {{ .Values.config.orchestrator.output_queue }}
             - name: RABBITPASS
               valueFrom:
                 secretKeyRef:
-                  name: stateful-rabbitmq
+                  name: databases-rabbitmq
                   key: rabbitmq-password
                   optional: false
             - name: MARIAHOST
@@ -29,7 +29,7 @@ spec:
             - name: MARIAUSER
               value: "user"
             - name: MARIADB
-              value: "my_database"
+              value: "weather"
             - name: MARIAPASS
               valueFrom:
                 secretKeyRef:
