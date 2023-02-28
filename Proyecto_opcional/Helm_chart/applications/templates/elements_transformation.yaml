@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.config.elements_transformation.name }}
+  labels:
+    app: {{ .Values.config.elements_transformation.name }}
+spec:
+  replicas: {{ .Values.config.elements_transformation.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.config.elements_transformation.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.config.elements_transformation.name }}
+    spec:
+      containers:
+      - name: {{ .Values.config.elements_transformation.name }}
+        image: {{ .Values.config.elements_transformation.image }}
+        env:
+          - name: RABBITMQ
+            value: "databases-rabbitmq"
+          - name: RABBITPASS
+            valueFrom:
+              secretKeyRef:
+                name: databases-rabbitmq
+                key: rabbitmq-password
+                optional: false
+          - name: INPUT_QUEUE
+            value: {{ .Values.config.elements_transformation.input_queue }}
+          - name: OUTPUT_QUEUE
+            value: {{ .Values.config.elements_transformation.output_queue }}
+          - name: ESENDPOINT
+            value: elastic-es-default
+          - name: ESPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: elastic-es-elastic-user
+                key: elastic
+                optional: false
+          - name: ESINDEXDAILY
+            value: daily

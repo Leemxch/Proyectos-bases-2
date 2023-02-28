@@ -18,3 +18,9 @@ config:
     input_queue: "TO_PARSE"
     output_queue: "TO_TRANSFORM"
     image: basesdedatos2/parser'
+  elements_transformation:
+    replicas: 1
+    name: elements_transformation
+    input_queue: "TO_TRANSFORM"
+    output_queue: "TO_STATION"
+    image: basesdedatos2/elements_transformation'
