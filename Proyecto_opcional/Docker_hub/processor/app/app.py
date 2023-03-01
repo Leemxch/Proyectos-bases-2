@@ -4,10 +4,11 @@ import os
 import pika
 import hashlib
 import json
+from elasticsearch import Elasticsearch
 
 url = "https://www.ncei.noaa.gov/pub/data/ghcn/daily/all"
 
-hostname = os.getenv('HOSTNAME')
+hohestname = os.getenv('HOSTNAME')
 RABBIT_MQ=os.getenv('RABBITMQ')
 RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
 OUTPUT_QUEUE=os.getenv('OUTPUT_QUEUE')
@@ -15,14 +16,17 @@ INPUT_QUEUE=os.getenv('INPUT_QUEUE')
 
 
 def callback(ch, method, properties, body):
+    print('Recibiendo msj de cola.')
     json_object = json.loads(body)
-    filename= json_object.getString('message')
+    filename= str(json_object['msg'])
+    print(filename)
     urlFile= url + filename
     checkmd5(urlFile,filename)
     #channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=json.dumps(json_object))
     print(json_object)
 
 def checkmd5(urlFile,filename):
+    print('Revisando md5..')
     hitFile = 1
     requestFile = requests.get(urlFile)
     requestFileData = str(requestFile.content)
@@ -53,8 +57,9 @@ def checkmd5(urlFile,filename):
          
     if hitFile:
         connection.execute('UPDATE files SET file_state=PROCESADO WHERE file_md5 = ?', (str(md5File.hexdigest()),))
+        print('Procesado')
     else:
-        print("Found change in file")
+        print("Cambio en archivo, actualizando..")
         ##Almacenar en ElasticSearch en indice files.
         connection.execute('UPDATE files SET file_state=DESCARGADO WHERE file_name= ?', (filename),)
         connection.execute('UPDATE files SET file_md5=?', (str(md5File.hexdigest())),'WHERE file_name= ?', (filename),)
@@ -79,4 +84,5 @@ channel_output = connection_output.channel()
 channel_output.queue_declare(queue=OUTPUT_QUEUE)
 '''
 
+print('Esperando cola..')
 channel_input.start_consuming()
