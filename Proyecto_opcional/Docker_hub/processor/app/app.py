@@ -1,19 +1,7 @@
-import time
-import os
 import requests
-import pika
-from bs4 import BeautifulSoup
-import sys
-from datetime import datetime
-import hashlib
-import json
 import mariadb
-
-import time
 import os
-import sys
 import pika
-from datetime import datetime
 import hashlib
 import json
 
