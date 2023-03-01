@@ -75,15 +75,17 @@ for file in files:
     hitFile = 1
     urlFile = url + '/' + file
     connection.execute("SELECT file_name from files WHERE file_name=?", (file,))
-    for i in connection:
-        connection.execute("UPDATE files SET file_date=now() WHERE file_name=?", (file,))
-        hitFile = 0
-    if hitFile:
-        connection.execute(
-            "INSERT INTO files(file_name, file_url, file_date, file_state, file_md5) VALUES(?, ?, now(), 'LISTADO', 'null')",
-            (file, urlFile))
-        hitFile = 1
+    if connection.rowcount != 0 and connection.rowcount != -1:
+        for i in connection:
+            connection.execute("UPDATE files SET file_date=now() WHERE file_name=?", (file,))
+            hitFile = 0
+        if hitFile:
+            connection.execute(
+                "INSERT INTO files(file_name, file_url, file_date, file_state, file_md5) VALUES(?, ?, now(), 'LISTADO', 'null')",
+                (file, urlFile))
+            hitFile = 1
 
+connection.close()
 mariaDatabase.commit()
 mariaDatabase.close()
 
@@ -98,4 +100,4 @@ for file in files:
     msg = "{\"data\": [ {\"msg\":\"" + result + "\", \"hostname\": \"" + hostname + "\"}]}"
     channel.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=msg)
 
-connection.close()
+
