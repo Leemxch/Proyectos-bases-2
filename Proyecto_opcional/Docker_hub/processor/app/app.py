@@ -4,12 +4,13 @@ import os
 import pika
 import hashlib
 import json
+from random import randint
 from elasticsearch import Elasticsearch
 
 url = "https://www.ncei.noaa.gov/pub/data/ghcn/daily/all"
 
 #Enviroment Variables
-hohestname = os.getenv('HOSTNAME')
+hostname = os.getenv('HOSTNAME')
 RABBIT_MQ=os.getenv('RABBITMQ')
 RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
 OUTPUT_QUEUE=os.getenv('OUTPUT_QUEUE')
@@ -24,17 +25,15 @@ clientES = Elasticsearch("https://" + ESENDPOINT + ":9200", basic_auth = ("elast
 def callback(ch, method, properties, body):
     print('Recibiendo msj de cola.')
     json_object = json.loads(body)
-    filename= str(json_object['msg'])
+    filename= json_object['data'][0]['msg']
     print(filename)
     urlFile= url + filename
     checkmd5(urlFile,filename)
-    channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=json.dumps(json_object))
-    print(json_object)
+    msg = "{\"data\": [ {\"msg\":\"" + filename + "\", \"hostname\": \"" + hostname + "\"}]}"
+    channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=json.dumps(msg))
 
 #Función para añadir documentos al índice file y crearlo sí no existe.
 def addFileElastic(fileName,fileData):
-    print(clientES.exists('files'))
-
     if not clientES.exists('files'):
         mappings = {
             "properties": {
@@ -48,9 +47,8 @@ def addFileElastic(fileName,fileData):
         'filename': fileName,
         'contents': fileData,
     }
-
-    #ID único problema.
-    clientES.index(index='files', id=0, document=doc)
+    randomID= randint(0, 50000000)
+    clientES.index(index='files', id=randomID, document=doc)
 
 #Función para comparar el md5 del archivo descargado al de la base de datos.
 def checkmd5(urlFile,filename):
@@ -80,22 +78,28 @@ def checkmd5(urlFile,filename):
 
     connection.execute("SELECT file_md5 from files WHERE file_md5 = ?", (str(md5File.hexdigest()),))
     
+    #Verificar si el md5 es diferente o igual.
     for i in connection:
         hitFile=0
-         
+        
     if hitFile:
-        connection.execute('UPDATE files SET file_state=PROCESADO WHERE file_md5 = ?', (str(md5File.hexdigest()),))
+        connection.execute('UPDATE files SET file_state = ? WHERE file_md5 = ?', ('PROCESADO', str(md5File.hexdigest()),))
         print('Procesado')
     else:
         print("Indexando en Elasticsearch..")
         addFileElastic(filename,requestFileData)
-        connection.execute('UPDATE files SET file_state=DESCARGADO WHERE file_name= ?', (filename),)
-        connection.execute('UPDATE files SET file_md5=?', (str(md5File.hexdigest())),'WHERE file_name= ?', (filename),)
+        connection.execute('UPDATE files SET file_state = ? WHERE file_name= ?', ('DESCARGADO', filename),)
+        connection.execute('UPDATE files SET file_md5 = ?', (str(md5File.hexdigest())),'WHERE file_name= ?', (filename),)
         hitFile=1
-        
+    
+    # Close connection
+    mariaDatabase.commit()
+    mariaDatabase.close()
+
     return    
 
 
+#Conexiones para la cola.
 credentials_input = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
 parameters_input = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials_input)
 connection_input = pika.BlockingConnection(parameters_input)

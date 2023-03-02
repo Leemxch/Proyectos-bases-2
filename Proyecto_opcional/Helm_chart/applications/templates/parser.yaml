@@ -5,7 +5,7 @@ metadata:
   labels:
     app: {{ .Values.config.parser.name }}
 spec:
-  replicas: {{ .Values.config.parser.image }}
+  replicas: {{ .Values.config.parser.replicas }}
   selector:
     matchLabels:
       app: {{ .Values.config.parser.name }}
@@ -38,5 +38,21 @@ spec:
                 name: elastic-es-elastic-user
                 key: elastic
                 optional: false
-          - name: ESINDEXGROUPS
-            value: groups
+          - name: ESINDEXDAILY
+            value: daily
+          - name: ESINDEXFILES
+            value: files
+          - name: MARIAHOST
+            value: "databases-mariadb"
+          - name: MARIAPORT
+            value: "3306"
+          - name: MARIAUSER
+            value: "user"
+          - name: MARIADB
+            value: "weather"
+          - name: MARIAPASS
+            valueFrom:
+              secretKeyRef:
+                name: databases-mariadb
+                key: mariadb-password
+                optional: false
