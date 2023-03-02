@@ -1,8 +1,13 @@
-FROM python:3.10.7-slim-bullseye
+FROM python:3.6-buster
+
+RUN apt-get update && apt-get -yy install libmariadb-dev
 
 WORKDIR /app
 
 COPY app/. .
-RUN pip install --no-cache-dir -r requirements.txt
 
-CMD [ "python", "-u", "./app.py" ]
+RUN pip install --upgrade pip
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+
+CMD [ "python", "-u", "./app.py"]
