@@ -10,7 +10,7 @@ from elasticsearch import Elasticsearch
 url = "https://www.ncei.noaa.gov/pub/data/ghcn/daily/all"
 
 #Enviroment Variables
-hohestname = os.getenv('HOSTNAME')
+hostname = os.getenv('HOSTNAME')
 RABBIT_MQ=os.getenv('RABBITMQ')
 RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
 OUTPUT_QUEUE=os.getenv('OUTPUT_QUEUE')
@@ -29,8 +29,8 @@ def callback(ch, method, properties, body):
     print(filename)
     urlFile= url + filename
     checkmd5(urlFile,filename)
-    channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=json.dumps(json_object))
-    print(json_object)
+    msg = "{\"data\": [ {\"msg\":\"" + filename + "\", \"hostname\": \"" + hostname + "\"}]}"
+    channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=json.dumps(msg))
 
 #Función para añadir documentos al índice file y crearlo sí no existe.
 def addFileElastic(fileName,fileData):
@@ -91,7 +91,11 @@ def checkmd5(urlFile,filename):
         connection.execute('UPDATE files SET file_state = ? WHERE file_name= ?', ('DESCARGADO', filename),)
         connection.execute('UPDATE files SET file_md5 = ?', (str(md5File.hexdigest())),'WHERE file_name= ?', (filename),)
         hitFile=1
-        
+    
+    # Close connection
+    mariaDatabase.commit()
+    mariaDatabase.close()
+
     return    
 
 
