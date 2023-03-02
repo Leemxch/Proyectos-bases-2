@@ -44,3 +44,13 @@ spec:
                 name: databases-mariadb
                 key: mariadb-password
                 optional: false
+          - name: ESENDPOINT
+            value: elastic-es-default
+          - name: ESPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: elastic-es-elastic-user
+                key: elastic
+                optional: false
+          - name: ESINDEXDAILY
+            value: daily 

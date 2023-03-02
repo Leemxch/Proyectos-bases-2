@@ -8,13 +8,19 @@ from elasticsearch import Elasticsearch
 
 url = "https://www.ncei.noaa.gov/pub/data/ghcn/daily/all"
 
+#Enviroment Variables
 hohestname = os.getenv('HOSTNAME')
 RABBIT_MQ=os.getenv('RABBITMQ')
 RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
 OUTPUT_QUEUE=os.getenv('OUTPUT_QUEUE')
 INPUT_QUEUE=os.getenv('INPUT_QUEUE')
+ESENDPOINT = os.getenv('ESENDPOINT')
+ESPASSWORD = os.getenv('ESPASSWORD')
 
+#Connection with elasticsearch
+clientES = Elasticsearch("https://" + ESENDPOINT + ":9200", basic_auth = ("elastic", ESPASSWORD), verify_certs = False)
 
+#Función para recibir el msj
 def callback(ch, method, properties, body):
     print('Recibiendo msj de cola.')
     json_object = json.loads(body)
@@ -22,9 +28,31 @@ def callback(ch, method, properties, body):
     print(filename)
     urlFile= url + filename
     checkmd5(urlFile,filename)
-    #channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=json.dumps(json_object))
+    channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=json.dumps(json_object))
     print(json_object)
 
+#Función para añadir documentos al índice file y crearlo sí no existe.
+def addFileElastic(fileName,fileData):
+    print(clientES.exists('files'))
+
+    if not clientES.exists('files'):
+        mappings = {
+            "properties": {
+                'filename': {"type": "text", "analyzer": "english"},
+                'contents': {"type": "text", "analyzer": "english"}
+            }
+        }   
+        clientES.indices.create(index="files", mappings=mappings)
+
+    doc = {
+        'filename': fileName,
+        'contents': fileData,
+    }
+
+    #ID único problema.
+    clientES.index(index='files', id=0, document=doc)
+
+#Función para comparar el md5 del archivo descargado al de la base de datos.
 def checkmd5(urlFile,filename):
     print('Revisando md5..')
     hitFile = 1
@@ -59,13 +87,13 @@ def checkmd5(urlFile,filename):
         connection.execute('UPDATE files SET file_state=PROCESADO WHERE file_md5 = ?', (str(md5File.hexdigest()),))
         print('Procesado')
     else:
-        print("Cambio en archivo, actualizando..")
-        ##Almacenar en ElasticSearch en indice files.
+        print("Indexando en Elasticsearch..")
+        addFileElastic(filename,requestFileData)
         connection.execute('UPDATE files SET file_state=DESCARGADO WHERE file_name= ?', (filename),)
         connection.execute('UPDATE files SET file_md5=?', (str(md5File.hexdigest())),'WHERE file_name= ?', (filename),)
         hitFile=1
-
-    return
+        
+    return    
 
 
 credentials_input = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
@@ -76,13 +104,13 @@ channel_input.queue_declare(queue=INPUT_QUEUE)
 channel_input.basic_consume(queue=INPUT_QUEUE, on_message_callback=callback, auto_ack=True) 
 
 
-'''
+
 credentials_output = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
 parameters_output = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials_output)
 connection_output = pika.BlockingConnection(parameters_output)
 channel_output = connection_output.channel()
 channel_output.queue_declare(queue=OUTPUT_QUEUE)
-'''
+
 
 print('Esperando cola..')
 channel_input.start_consuming()
