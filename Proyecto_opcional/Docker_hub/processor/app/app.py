@@ -46,6 +46,7 @@ def addFileElastic(fileName,fileData):
         'filename': fileName,
         'contents': fileData,
     }
+    fileName.replace('.dly', '')
     clientES.index(index='files', id=fileName, document=doc)
 
 #Función para comparar el md5 del archivo descargado al de la base de datos.
