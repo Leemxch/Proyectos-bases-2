@@ -25,10 +25,10 @@ def callback(ch, method, properties, body):
     print('Recibiendo msj de cola.')
     json_object = json.loads(body)
     filename= json_object['data'][0]['msg']
-    print(filename)
     urlFile= url + filename
     checkmd5(urlFile,filename)
     msg = "{\"data\": [ {\"msg\":\"" + filename + "\", \"hostname\": \"" + hostname + "\"}]}"
+    print(msg)
     channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=json.dumps(msg))
 
 #Función para añadir documentos al índice file y crearlo sí no existe.
@@ -82,13 +82,14 @@ def checkmd5(urlFile,filename):
         hitFile=0
         
     if hitFile:
-        connection.execute('UPDATE files SET file_state = ? WHERE file_md5 = ?', ('PROCESADO', str(md5File.hexdigest()),))
+        connection.execute("UPDATE files SET file_state = 'PROCESADO' WHERE file_md5 = ?", (str(md5File.hexdigest()),))
         print('Procesado')
     else:
         print("Indexando en Elasticsearch..")
         addFileElastic(filename,requestFileData)
-        connection.execute('UPDATE files SET file_state = ? WHERE file_name= ?', ('DESCARGADO', filename),)
-        connection.execute('UPDATE files SET file_md5 = ?', (str(md5File.hexdigest())),'WHERE file_name= ?', (filename),)
+        connection.execute("UPDATE files SET file_state = 'DESCARGADO', \
+                           file_md5 = ? WHERE file_name= ?", (str(md5File.hexdigest()), filename))
+        print("MariaDB file updated")
         hitFile=1
     
     # Close connection

@@ -13,57 +13,64 @@ OUTPUT_QUEUE=os.getenv('OUTPUT_QUEUE')
 INPUT_QUEUE=os.getenv('INPUT_QUEUE')
 ESENDPOINT = os.getenv('ESENDPOINT')
 ESPASSWORD = os.getenv('ESPASSWORD')
+ESINDEXFILES = os.getenv('ESINDEXFILES')
+ESINDEXDAILY = os.getenv('ESINDEXDAILY')
 # MariaDB env variables
 MARIAHOST = os.getenv('MARIAHOST')
 MARIAPORT = os.getenv('MARIAPORT')
 MARIAUSER = os.getenv('MARIAUSER')
 MARIAPASS = os.getenv('MARIAPASS')
 MARIADB = os.getenv('MARIADB')
+# Extra
+hostname = os.getenv('HOSTNAME')
 
 def callback(ch, method, properties, body):
-    name = body["fileName"]
-    parsed = getFiles(body)
-    msg = {
-        "fileName": name,
+    json_object = json.loads(body)
+    fileName= json_object['data'][0]['msg']
+    fileName.replace('.dly', '')
+    parsed = getFile(fileName)
+    doc = {
+        "fileName": fileName,
         "data": parsed
     }
-
     # Remove the index of files and add the index daily in Elasticsearch
-    #client.indices.create(index="daily", id= name, document= msg)
-    #client.indices.delete(index="files", doc = name)
+    client.indices.create(index=ESINDEXDAILY, id= fileName, document= doc)
+    client.indices.delete(index=ESINDEXFILES, id= fileName)
 
     # Update the table weather.files
     try:
         connection.execute("UPDATE files \
                         SET file_state= 'PARSEADO'\
-                        WHERE file_name = ?", (name,))
+                        WHERE file_name = ?", (fileName,))
     except:
         print("No se ha encontrado el archivo")
 
     # Send msg
-    channel.basic_publish(exchange = '', routing_key = OUTPUT_QUEUE, body = json.dump(msg))
+    msg = "{\"data\": [ {\"msg\":\"" + fileName + "\", \"hostname\": \"" + hostname + "\"}]}"
+    channel.basic_publish(exchange = '', routing_key = OUTPUT_QUEUE, body = msg)
 
-def getFiles(body):
-    contents = body["contents"]
-    files = contents.split("\\n")
-    temp = []
-    for i in files:
-        try:
-            file = {
-                'id': i[1:11],
-                "year": i[12:15],
-                "month": i[16:17],
-                "element": i[18:21],
-                "value": i[22:26],
-                "mflag": i[27:27],
-                "qflag": i[28:28],
-                "sflag": i[29:29]
+def getFile(fileName):
+    try:
+        file = client.get(index = ESINDEXFILES, id=fileName)
+        print(file['_source'])
+        rawData = str(file['_source'])[2:]
+        parse = rawData.split('\\n')
+        temp = []
+        for i in parse:
+            fileContent = {
+                'id': i[0:11],
+                # month + year
+                "date": i[15:17] + i[11:15],
+                "element": i[17:21],
+                "value": i[21:26],
+                "mflag": i[26:27],
+                "qflag": i[27:28],
+                "sflag": i[28:29]
             }
-            print(file)
-            temp.append(file)
-        except:
-            print("Something went wrong")
-            pass
+            temp.append(fileContent)
+    except:
+        print("Archivo no encontrado: ", fileName)
+    print(temp)
     return temp
 
 credentials_input = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)

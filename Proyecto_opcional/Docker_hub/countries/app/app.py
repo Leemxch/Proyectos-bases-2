@@ -63,14 +63,6 @@ mariaDatabase = mariadb.connect(
 
 '''
 mariaDatabase = mariadb.connect(
-    host="127.0.0.1",
-    port=3305,
-    user="user", 
-    password="user",
-    database="my_database"
-)
-
-mariaDatabase = mariadb.connect(
     host="localhost",
     port=3306,
     user="Leemxch", 
