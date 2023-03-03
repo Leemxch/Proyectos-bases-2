@@ -6,7 +6,7 @@ import hashlib
 import json
 from elasticsearch import Elasticsearch
 
-url = "https://www.ncei.noaa.gov/pub/data/ghcn/daily/all"
+url = "https://www.ncei.noaa.gov/pub/data/ghcn/daily/all/"
 
 #Enviroment Variables
 hostname = os.getenv('HOSTNAME')
@@ -31,24 +31,18 @@ def callback(ch, method, properties, body):
 
 #Función para añadir documentos al índice file y crearlo sí no existe.
 def addFileElastic(fileName,fileData):
-    if not clientES.exists('files'):
-        mappings = {
-            "properties": {
-                'filename': {"type": "text", "analyzer": "english"},
-                'contents': {"type": "text", "analyzer": "english"}
-            }
-        }   
-        clientES.indices.create(index="files", mappings=mappings)
-
     doc = {
         'filename': fileName,
         'contents': fileData,
     }
+    try:
+        clientES.indices.create(index="files", mappings=doc)
+    except:
+        pass
 
     msg = "{\"data\": [ {\"msg\":\"" + fileName + "\", \"hostname\": \"" + hostname + "\"}]}"
-    fileName.replace('.dly', '')
     clientES.index(index='files', id=fileName, document=doc)
-    channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=json.dumps(msg))
+    channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=msg)
 
 #Función para comparar el md5 del archivo descargado al de la base de datos.
 def checkmd5(urlFile,filename):
@@ -76,21 +70,21 @@ def checkmd5(urlFile,filename):
 
     connection = mariaDatabase.cursor()
 
-    connection.execute("SELECT file_md5 from files WHERE file_md5 = ?", (str(md5File.hexdigest()),))
+    connection.execute("SELECT file_md5 from files WHERE file_md5 = ? AND file_name = ?", (str(md5File.hexdigest()),filename))
     
     #Verificar si el md5 es diferente o igual.
     for i in connection:
         hitFile=0
         
     if hitFile:
-        connection.execute('UPDATE files SET file_state = ? WHERE file_md5 = ?', ('PROCESADO', str(md5File.hexdigest()),))
-        print('Procesado')
-    else:
         print("Indexando en Elasticsearch..")
         addFileElastic(filename,requestFileData)
-        connection.execute('UPDATE files SET file_state = ? WHERE file_name= ?', ('DESCARGADO', filename),)
-        connection.execute('UPDATE files SET file_md5 = ?', (str(md5File.hexdigest())),'WHERE file_name= ?', (filename),)
-        hitFile=1
+        connection.execute("UPDATE files SET file_state = 'DESCARGADO', file_md5 = ? WHERE file_name= ?", (str(md5File.hexdigest()), filename))
+        print("Descargado")
+    else:
+        connection.execute("UPDATE files SET file_state = 'PROCESADO' WHERE file_md5 = ?", (str(md5File.hexdigest()),))
+        print('Procesado')
+        
     
     # Close connection
     mariaDatabase.commit()
