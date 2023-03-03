@@ -44,7 +44,7 @@ def callback(ch, method, properties, body):
                 case "RHMX":
                     dicDataList[i]['type_name'] = "Maximum relative humidity for the day (percent)"
                 case _:
-                    dicDataList[i]['type_name'] = "No type"
+                    dicDataList[i]['type_name'] = ""
         dicFile['data'] = dicDataList
         # Actualiza datos en Elasticsearch
         print("updating Elasticsearch")
