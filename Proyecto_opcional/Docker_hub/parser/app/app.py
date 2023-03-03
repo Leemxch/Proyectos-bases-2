@@ -25,26 +25,13 @@ MARIADB = os.getenv('MARIADB')
 hostname = os.getenv('HOSTNAME')
 
 def callback(ch, method, properties, body):
+    print('Recibiendo msj de cola.')
     json_object = json.loads(body)
     fileName= json_object['data'][0]['msg']
     fileName.replace('.dly', '')
     parsed = getFile(fileName)
-    doc = {
-        "fileName": fileName,
-        "data": parsed
-    }
-    # Remove the index of files and add the index daily in Elasticsearch
-    client.indices.create(index=ESINDEXDAILY, id= fileName, document= doc)
-    client.indices.delete(index=ESINDEXFILES, id= fileName)
-
-    # Update the table weather.files
-    try:
-        connection.execute("UPDATE files \
-                        SET file_state= 'PARSEADO'\
-                        WHERE file_name = ?", (fileName,))
-    except:
-        print("No se ha encontrado el archivo")
-
+    elasticFiles(fileName, parsed)
+    mariaFiles(fileName)
     # Send msg
     msg = "{\"data\": [ {\"msg\":\"" + fileName + "\", \"hostname\": \"" + hostname + "\"}]}"
     channel.basic_publish(exchange = '', routing_key = OUTPUT_QUEUE, body = msg)
@@ -68,10 +55,47 @@ def getFile(fileName):
                 "sflag": i[28:29]
             }
             temp.append(fileContent)
+        print(temp)
+        return temp
     except:
         print("Archivo no encontrado: ", fileName)
-    print(temp)
-    return temp
+
+def elasticFiles(fileName,parsed):
+    doc = {
+        "fileName": fileName,
+        "data": parsed
+    }
+    try: # try to create the index ESINDEXDAILY
+        client.indices.create(index=ESINDEXDAILY, mappings=doc)
+    except: # ignore if exists
+        pass
+    # Remove the index of files and add the index daily in Elasticsearch
+    client.index(index=ESINDEXDAILY, id= fileName, document= doc)
+    try:
+        client.delete(index=ESINDEXFILES, id= fileName)
+    except:
+        pass
+
+def mariaFiles(fileName):
+    # Mariadb connection
+    mariaDatabase = mariadb.connect(
+        host=MARIAHOST,
+        port=int(MARIAPORT),
+        user=MARIAUSER, 
+        password=MARIAPASS,
+        database=MARIADB
+    )
+    connection = mariaDatabase.cursor()
+    # Update the table weather.files
+    try:
+        connection.execute("UPDATE files \
+                        SET file_state= 'PARSEADO'\
+                        WHERE file_name = ?", (fileName,))
+    except:
+        print("No se ha encontrado el archivo")
+    # Close connection
+    mariaDatabase.commit()
+    mariaDatabase.close()
 
 credentials_input = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
 parameters_input = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials_input)
@@ -80,18 +104,14 @@ channel = connection_input.channel()
 channel.queue_declare(queue=INPUT_QUEUE)
 channel.basic_consume(queue=INPUT_QUEUE, on_message_callback=callback, auto_ack=True) 
 
+credentials_output = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
+parameters_output = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials_output)
+connection_output = pika.BlockingConnection(parameters_output)
+channel_output = connection_output.channel()
+channel_output.queue_declare(queue=OUTPUT_QUEUE)
+
 # Elasticsearch connection
 client = Elasticsearch("https://" + ESENDPOINT + ":9200", basic_auth = ("elastic", ESPASSWORD), verify_certs = False)
-
-# Mariadb connection
-mariaDatabase = mariadb.connect(
-    host=MARIAHOST,
-    port=int(MARIAPORT),
-    user=MARIAUSER, 
-    password=MARIAPASS,
-    database=MARIADB
-)
-connection = mariaDatabase.cursor()
 
 print("Waiting...")
 channel.start_consuming()

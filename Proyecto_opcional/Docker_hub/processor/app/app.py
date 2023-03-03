@@ -29,7 +29,7 @@ def callback(ch, method, properties, body):
     checkmd5(urlFile,filename)
     msg = "{\"data\": [ {\"msg\":\"" + filename + "\", \"hostname\": \"" + hostname + "\"}]}"
     print(msg)
-    channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=json.dumps(msg))
+    channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=msg)
 
 #Función para añadir documentos al índice file y crearlo sí no existe.
 def addFileElastic(fileName,fileData):

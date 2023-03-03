@@ -39,9 +39,9 @@ spec:
                 key: elastic
                 optional: false
           - name: ESINDEXDAILY
-            value: daily
+            value: 'daily'
           - name: ESINDEXFILES
-            value: files
+            value: 'files'
           - name: MARIAHOST
             value: "databases-mariadb"
           - name: MARIAPORT
