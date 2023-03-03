@@ -15,6 +15,7 @@ RABBIT_MQ_PASSWORD = os.getenv('RABBITPASS')
 OUTPUT_QUEUE = os.getenv('OUTPUT_QUEUE')
 
 
+# Funcion que acomoda los archivos en una nueva lista solo con sus respectivos nombres
 def arrangeFiles(list):
     newList = []
     fileCount = 0
@@ -29,9 +30,9 @@ def arrangeFiles(list):
             return newList
     return newList
 
-
-print("Trayendo archivos...")
-url = ("https://www.ncei.noaa.gov/pub/data/ghcn/daily/all");
+#Trayendo archivos de URL...
+print("Trayendo archivos de URL...")
+url = ("https://www.ncei.noaa.gov/pub/data/ghcn/daily/all")
 requestFiles = requests.get(url)
 filesSoup = BeautifulSoup(requestFiles.text, 'html.parser')
 files = filesSoup.findAll('a')
@@ -71,33 +72,38 @@ connection = mariaDatabase.cursor()
 
 print("Corriendo Query...")
 
+# Utiliza los nombres de los archivos para recorrer la base de datos y
+# averiguar si existe un archivo con el mismo nombre
 for file in files:
     hitFile = 1
     urlFile = url + '/' + file
     connection.execute("SELECT file_name from files WHERE file_name=?", (file,))
+    # existe coincidencia = actualiza fecha
     if connection.rowcount != 0 and connection.rowcount != -1:
         for i in connection:
             connection.execute("UPDATE files SET file_date=now() WHERE file_name=?", (file,))
             hitFile = 0
-        if hitFile:
-            connection.execute(
-                "INSERT INTO files(file_name, file_url, file_date, file_state, file_md5) VALUES(?, ?, now(), 'LISTADO', 'null')",
-                (file, urlFile))
-            hitFile = 1
+    # NO existe coincidencia = ingresa a la base de datos
+    if hitFile:
+        connection.execute(
+            "INSERT INTO files(file_name, file_url, file_date, file_state, file_md5) VALUES(?, ?, now(), 'LISTADO', 'null')",
+            (file, urlFile))
+        hitFile = 1
 
-connection.close()
-mariaDatabase.commit()
-mariaDatabase.close()
-
+# Logica y connexion a rabbit mq
 credentials = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
 parameters = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials)
 connection = pika.BlockingConnection(parameters)
 channel = connection.channel()
 channel.queue_declare(queue=OUTPUT_QUEUE)
 
+print("Enviando datos por RabbitMQ...")
+# Envio de datos a consumidor.
 for file in files:
     result = file
     msg = "{\"data\": [ {\"msg\":\"" + result + "\", \"hostname\": \"" + hostname + "\"}]}"
     channel.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=msg)
 
-
+connection.close()
+mariaDatabase.commit()
+mariaDatabase.close()
