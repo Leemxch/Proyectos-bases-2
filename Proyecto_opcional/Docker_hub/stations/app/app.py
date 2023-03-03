@@ -110,3 +110,4 @@ try:
 
 except Error as e:
     print("Error en la conexion a la base de datos: ", e)
+print("-----------------------------------------------------------------")
