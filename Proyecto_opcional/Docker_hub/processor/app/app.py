@@ -4,7 +4,6 @@ import os
 import pika
 import hashlib
 import json
-from random import randint
 from elasticsearch import Elasticsearch
 
 url = "https://www.ncei.noaa.gov/pub/data/ghcn/daily/all"
@@ -47,8 +46,7 @@ def addFileElastic(fileName,fileData):
         'filename': fileName,
         'contents': fileData,
     }
-    randomID= randint(0, 50000000)
-    clientES.index(index='files', id=randomID, document=doc)
+    clientES.index(index='files', id=fileName, document=doc)
 
 #Función para comparar el md5 del archivo descargado al de la base de datos.
 def checkmd5(urlFile,filename):
