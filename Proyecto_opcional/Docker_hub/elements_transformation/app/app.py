@@ -11,7 +11,7 @@ def callback(ch, method, properties, body):
     print("Message received: ")
     print(message)
     fileName = message['data'][0]['msg']
-    nameFile = fileName[0:len(fileName) - 4]
+    nameFile = fileName[0:len(fileName)]
     dataFile = client.get(index = ESINDEXDAILY, id = nameFile)
     # si existe
     if dataFile['found']:
@@ -30,21 +30,20 @@ def callback(ch, method, properties, body):
             dicDataList[i]['real_station_id'] = station_id[3:len(station_id)]
             # agrega nombre del tipo
             tipo = dicDataList[i]['type']
-            match tipo:
-                case "PRCP":
-                    dicDataList[i]['type_name'] = "Precipitation (tenths of mm)"
-                case "SNOW":
-                    dicDataList[i]['type_name'] = "Snowfall (mm)"
-                case "SNWD":
-                    dicDataList[i]['type_name'] = "Snow depth (mm)"
-                case "TMAX":
-                    dicDataList[i]['type_name'] = "Maximum temperature (tenths of degrees C)"
-                case "TMIN":
-                    dicDataList[i]['type_name'] = "Minimum temperature (tenths of degrees C)"
-                case "RHMX":
-                    dicDataList[i]['type_name'] = "Maximum relative humidity for the day (percent)"
-                case _:
-                    dicDataList[i]['type_name'] = ""
+            if tipo == "PRCP":
+                dicDataList[i]['type_name'] = "Precipitation (tenths of mm)"
+            elif tipo == "SNOW":
+                dicDataList[i]['type_name'] = "Snowfall (mm)"
+            elif tipo == "SNWD":
+                dicDataList[i]['type_name'] = "Snow depth (mm)"
+            elif tipo == "TMAX":
+                dicDataList[i]['type_name'] = "Maximum temperature (tenths of degrees C)"
+            elif tipo == "TMIN":
+                dicDataList[i]['type_name'] = "Minimum temperature (tenths of degrees C)"
+            elif tipo == "RHMX":
+                dicDataList[i]['type_name'] = "Maximum relative humidity for the day (percent)"
+            else:
+                dicDataList[i]['type_name'] = ""
         dicFile['data'] = dicDataList
         # Actualiza datos en Elasticsearch
         print("updating Elasticsearch")
