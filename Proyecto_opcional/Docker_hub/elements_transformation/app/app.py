@@ -20,16 +20,18 @@ def callback(ch, method, properties, body):
         dicDataList = dicFile['data']
         print("adding values")
         for i in range(0, len(dicDataList)):
+            station_id = dicDataList[i]['id']
+            if len(station_id) < 11:
+                continue
             # agrega mes y año
             dicDataList[i]['month'] = dicDataList[i]['date'][0:2]
             dicDataList[i]['year'] = dicDataList[i]['date'][2:6]
             # agrega valores del station_id
-            station_id = dicDataList[i]['station_id']
             dicDataList[i]['FIPS_country_code'] = station_id[0:2]
             dicDataList[i]['network_code'] = station_id[2]
             dicDataList[i]['real_station_id'] = station_id[3:len(station_id)]
             # agrega nombre del tipo
-            tipo = dicDataList[i]['type']
+            tipo = dicDataList[i]['element']
             if tipo == "PRCP":
                 dicDataList[i]['type_name'] = "Precipitation (tenths of mm)"
             elif tipo == "SNOW":
@@ -50,7 +52,7 @@ def callback(ch, method, properties, body):
         client.index(index = ESINDEXDAILY, id = nameFile, document = dicFile)
         # Actualiza tabla files
         print("updating database")
-        connection.execute("UPDATE files SET file_state= 'TRANSFORMADO'\
+        cursor.execute("UPDATE files SET file_state= 'TRANSFORMADO'\
                             WHERE file_name = 'ghcnd-stations.txt'")
         mariaDatabase.commit()
         # Manda mensaje al siguiente componente
@@ -88,7 +90,7 @@ try:
         password=MARIAPASS,
         database=MARIADB
     )
-    connection = mariaDatabase.cursor()
+    cursor = mariaDatabase.cursor()
 except Error as e:
     print("Error en la conexion a la base de datos: ", e)
 
