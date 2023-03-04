@@ -28,7 +28,6 @@ def callback(ch, method, properties, body):
     print('Recibiendo msj de cola.')
     json_object = json.loads(body)
     fileName= json_object['data'][0]['msg']
-    fileName.replace('.dly', '')
     parsed = getFile(fileName)
     elasticFiles(fileName, parsed)
     mariaFiles(fileName)
@@ -39,8 +38,8 @@ def callback(ch, method, properties, body):
 def getFile(fileName):
     try:
         file = client.get(index = ESINDEXFILES, id=fileName)
-        print(file['_source'])
-        rawData = str(file['_source'])[2:]
+        print(file['_source']["contents"])
+        rawData = str(file['_source']["contents"])[2:]
         parse = rawData.split('\\n')
         temp = []
         for i in parse:
@@ -71,10 +70,7 @@ def elasticFiles(fileName,parsed):
         pass
     # Remove the index of files and add the index daily in Elasticsearch
     client.index(index=ESINDEXDAILY, id= fileName, document= doc)
-    try:
-        client.delete(index=ESINDEXFILES, id= fileName)
-    except:
-        pass
+    client.delete(index=ESINDEXFILES, id= fileName)
 
 def mariaFiles(fileName):
     # Mariadb connection
