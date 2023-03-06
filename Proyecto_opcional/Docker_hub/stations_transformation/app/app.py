@@ -104,26 +104,29 @@ def callback(ch, method, properties, body):
         )
         connection = mariaDatabase.cursor()
 
+        print("Obtaining station where station_id = " + station_id)
         connection.execute(
             "SELECT * FROM stations WHERE station_id = ?",
             (station_id,))
-        records = connection.fetchall()
+
+
+
         print("Adding values...")
         # trae valores de la base de datos
-        for i in range(0, len(dicDataList)):
-            if i < 11:
+        for j in range(0, len(dicDataList)):
+            if j < 11:
                 continue
-            for record in records:
+            for i in connection:
                 print('EXISTE RECORD')
                 # agrega valores del station_id
-                dicDataList[i]['latitude'] = str(record[1])
-                dicDataList[i]['longitude'] = str(record[2])
-                dicDataList[i]['elevation'] = str(record[3])
-                dicDataList[i]['state'] = str(record[4])
-                dicDataList[i]['name'] = str(record[5])
-                dicDataList[i]['gsn_flag'] = str(record[6])
-                dicDataList[i]['hcn_flag'] = str(record[7])
-                dicDataList[i]['wmo_id'] = str(record[8])
+                dicDataList[j]['latitude'] = str(i[1])
+                dicDataList[j]['longitude'] = str(i[2])
+                dicDataList[j]['elevation'] = str(i[3])
+                dicDataList[j]['state'] = str(i[4])
+                dicDataList[j]['name'] = str(i[5])
+                dicDataList[j]['gsn_flag'] = str(i[6])
+                dicDataList[j]['hcn_flag'] = str(i[7])
+                dicDataList[j]['wmo_id'] = str(i[8])
 
         dicFile['data'] = dicDataList
         # Actualiza datos en Elasticsearch
@@ -133,11 +136,11 @@ def callback(ch, method, properties, body):
         # Actualiza datos en MariaDB
         print("Updating file_state in MariaDB...")
         connection.execute("UPDATE files SET file_state='CON_ESTACION' WHERE file_name=?", (nameFile,))
-        result = station_id
+        result = nameFile
 
-        # print("Enviando mensaje con RabbitMQ...")
-        # msg = "{\"data\": [ {\"msg\":\"" + result + "\", \"hostname\": \"" + hostname + "\"}]}"
-        # channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=msg)
+        print("Enviando mensaje con RabbitMQ...")
+        msg = "{\"data\": [ {\"msg\":\"" + result + "\", \"hostname\": \"" + hostname + "\"}]}"
+        channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=msg)
 
         connection.close()
         mariaDatabase.commit()
