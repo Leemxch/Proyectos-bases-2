@@ -4,55 +4,54 @@ import pika
 import json
 from elasticsearch import Elasticsearch
 
-
 # Busqueda en elasticsearch, devuelve el id de elasticsearch.
-def elasticsearch(message):
-    station_e_id = client.search(
-        index="daily",
-        body={
-            "query": {
-                "bool": {
-                    "must": {
-                        "match_phrase": {
-                            "station_id": message,
-                        }
-                    },
-                },
-            },
-        }, filter_path=['hits.hits._id']
-    )
-    return station_e_id
+# def elasticsearch(message):
+#    station_e_id = client.search(
+#        index="daily",
+#        body={
+#            "query": {
+#                "bool": {
+#                    "must": {
+#                        "match_phrase": {
+#                            "station_id": message,
+#                        }
+#                    },
+#                },
+#            },
+#        }, filter_path=['hits.hits._id']
+#    )
+#    return station_e_id
 
 
 # Actualiza el mapping dentro del indice.
-def elasticupdate():
-    oldmapping = client.indices.get_mapping(index='daily')
-    mapping = {
-        "properties": {
-            "station_id": {"type": "text"},
-            "date": {"type": "text"},
-            "month": {"type": "text"},
-            "year": {"type": "text"},
-            "type": {"type": "text"},
-            "value": {"type": "text"},
-            "nflag": {"type": "text"},
-            "qflag": {"type": "text"},
-            "FIPS_country_code": {"type": "text"},
-            "network_code": {"type": "text"},
-            "real_station_id": {"type": "text"},
-            "type_name": {"type": "text"},
-            "latitude": {"type": "text"},
-            "longitude": {"type": "text"},
-            "elevation": {"type": "text"},
-            "state": {"type": "text"},
-            "name": {"type": "text"},
-            "gsn_flag": {"type": "text"},
-            "hcn_flag": {"type": "text"},
-            "wmo_id": {"type": "text"},
-        }
-    }
-    if oldmapping != mapping:
-        client.indices.put_mapping(body=mapping, index='daily')
+# def elasticupdate():
+#    oldmapping = client.indices.get_mapping(index='daily')
+#    mapping = {
+#        "properties": {
+#            "station_id": {"type": "text"},
+#            "date": {"type": "text"},
+#            "month": {"type": "text"},
+#            "year": {"type": "text"},
+#            "type": {"type": "text"},
+#            "value": {"type": "text"},
+#            "nflag": {"type": "text"},
+#            "qflag": {"type": "text"},
+#            "FIPS_country_code": {"type": "text"},
+#            "network_code": {"type": "text"},
+#            "real_station_id": {"type": "text"},
+#            "type_name": {"type": "text"},
+#            "latitude": {"type": "text"},
+#            "longitude": {"type": "text"},
+#            "elevation": {"type": "text"},
+#            "state": {"type": "text"},
+#            "name": {"type": "text"},
+#            "gsn_flag": {"type": "text"},
+#            "hcn_flag": {"type": "text"},
+#            "wmo_id": {"type": "text"},
+#        }
+#    }
+#    if oldmapping != mapping:
+#        client.indices.put_mapping(body=mapping, index='daily')
 
 
 # Environment variables
@@ -65,27 +64,37 @@ ESENDPOINT = os.getenv('ESENDPOINT')
 ESPASSWORD = os.getenv('ESPASSWORD')
 ESINDEXDAILY = os.getenv('ESINDEXDAILY')
 
+MARIAHOST = os.getenv('MARIAHOST')
+MARIAPORT = os.getenv('MARIAPORT')
+MARIAUSER = os.getenv('MARIAUSER')
+MARIAPASS = os.getenv('MARIAPASS')
+MARIADB = os.getenv('MARIADB')
+
+
+
+
+
 # Elasticsearch connection
 client = Elasticsearch("https://" + ESENDPOINT + ":9200", basic_auth=("elastic", ESPASSWORD), verify_certs=False)
 
 
 # Función para recibir el msj
 def callback(ch, method, properties, body):
-    json_object = json.loads(body)
-    station_id = str(json_object['msg'])
-    station_id.replace('.dly', '')
-    esearch = elasticsearch(station_id)
-    if esearch is not None:
-        elasticupdate()
-
-        # Database connection
-        MARIAHOST = os.getenv('MARIAHOST')
-        MARIAPORT = os.getenv('MARIAPORT')
-        MARIAUSER = os.getenv('MARIAUSER')
-        MARIAPASS = os.getenv('MARIAPASS')
-        MARIADB = os.getenv('MARIADB')
+    message = json.loads(body)
+    print("Message received: ")
+    print(message)
+    fileName = message['data'][0]['msg']
+    nameFile = fileName[0:len(fileName)]
+    station_id = nameFile.replace('.dly', '')
+    dataFile = client.get(index=ESINDEXDAILY, id=nameFile)
+    # si existe
+    if dataFile['found']:
+        print("Found file in Elasticsearch: " + str(nameFile) + ".")
+        dicFile = dataFile['_source']
+        dicDataList = dicFile['data']
 
         # Conexion al servicio de la base de datos Mariadb
+        print("Establishing connection with MariaDB...")
         mariaDatabase = mariadb.connect(
             host=MARIAHOST,
             port=int(MARIAPORT),
@@ -93,38 +102,42 @@ def callback(ch, method, properties, body):
             password=MARIAPASS,
             database=MARIADB
         )
-
         connection = mariaDatabase.cursor()
 
-        # Traer datos de la base.
         connection.execute(
-            "SELECT latitude, longitude, elevation, state, name, gsn_flag, hcn_flag, wmo_id FROM files WHERE file_name=?",
+            "SELECT * FROM stations WHERE station_id = ?",
             (station_id,))
         records = connection.fetchall()
+        print("Adding values...")
+        # trae valores de la base de datos
+        for i in range(0, len(dicDataList)):
+            if i < 11:
+                continue
+            for record in records:
+                print('EXISTE RECORD')
+                # agrega valores del station_id
+                dicDataList[i]['latitude'] = str(record[1])
+                dicDataList[i]['longitude'] = str(record[2])
+                dicDataList[i]['elevation'] = str(record[3])
+                dicDataList[i]['state'] = str(record[4])
+                dicDataList[i]['name'] = str(record[5])
+                dicDataList[i]['gsn_flag'] = str(record[6])
+                dicDataList[i]['hcn_flag'] = str(record[7])
+                dicDataList[i]['wmo_id'] = str(record[8])
 
-        # Pasar los datos de la base a un body que actualizara el record en Elasticsearch.
-        for row in records:
-            body = {
-                "doc": {
-                    "latitude": row[0],
-                    "longitude": row[1],
-                    "elevation": row[2],
-                    "state": row[3],
-                    "name": row[4],
-                    "gsn_flag": row[5],
-                    "hcn_flag": row[6],
-                    "wmo_id": row[7]
-                }
-            }
+        dicFile['data'] = dicDataList
+        # Actualiza datos en Elasticsearch
+        print("Updating Elasticsearch...")
+        client.index(index=ESINDEXDAILY, id=nameFile, document=dicFile)
 
-        station_e_id = elasticsearch(station_id)
-        client.update(index='daily', id=station_e_id, body=body)
-        connection.execute("UPDATE files SET file_state='CON_ESTACION' WHERE file_name=?", (station_id,))
-
+        # Actualiza datos en MariaDB
+        print("Updating file_state in MariaDB...")
+        connection.execute("UPDATE files SET file_state='CON_ESTACION' WHERE file_name=?", (nameFile,))
         result = station_id
 
-        msg = "{\"data\": [ {\"msg\":\"" + result + "\", \"hostname\": \"" + hostname + "\"}]}"
-        channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=msg)
+        # print("Enviando mensaje con RabbitMQ...")
+        # msg = "{\"data\": [ {\"msg\":\"" + result + "\", \"hostname\": \"" + hostname + "\"}]}"
+        # channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=msg)
 
         connection.close()
         mariaDatabase.commit()
@@ -145,6 +158,6 @@ connection_output = pika.BlockingConnection(parameters_output)
 channel_output = connection_output.channel()
 channel_output.queue_declare(queue=OUTPUT_QUEUE)
 
-print('Esperando cola..')
+print('Esperando cola...')
 
 channel_input.start_consuming()

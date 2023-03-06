@@ -1,6 +1,7 @@
   enableRabbitMQ: true
   enableMariaDB: true
   enableOperator: true
+  enableElasticsearch: true
   
   rabbitmq:
     auth:
@@ -15,3 +16,8 @@
       username: "user"
       password: "user"
       database: "weather"
+
+  elasticsearch:
+    auth:
+      username: "user"
+      password: "user"

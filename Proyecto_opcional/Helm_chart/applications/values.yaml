@@ -24,9 +24,9 @@ config:
     input_queue: "TO_TRANSFORM"
     output_queue: "TO_STATION"
     image: basesdedatos2/elementstransformation
-  stations_tranformation:
+  stations_transformation:
     replicas: 1
-    name: stations_transformation
+    name: stationstransformation
     input_queue: "TO_STATION"
     output_queue: "TO_COUNTRY"
     image: basesdedatos2/stations_transformation
