@@ -91,15 +91,14 @@ try:
                                 SELECT * FROM (SELECT ? as station_id,? as latitude,? as longitude,? as elevation,? as state,? as name,? as gsn_flag,? as hcn_flag,? as wmo_id) AS tmp\
                                 WHERE NOT EXISTS (SELECT station_id FROM stations WHERE station_id = ?)\
                                 LIMIT 1",(i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7], i[8], i[0]))
-            # Assign new foreign key values
-            for country in countries:
-                if i[0][0:2] == country[1]:
-                    connection.execute("UPDATE stations SET country_id = ? \
-                    WHERE station_id = ?", (str(country[0]), i[0]))
-            for state in states:
-                if i[0][0:2] == state[1]:
-                    connection.execute("UPDATE stations SET state_id = ? \
-                    WHERE station_id = ?", (str(state[0]), i[0]))
+        # Assign new foreign key values
+        print("assigning foreign key values")
+        for country in countries:
+            connection.execute("UPDATE stations SET country_id = ? \
+            WHERE substring(station_id, 1, 2) = ?", (str(country[0]), country[1]))
+        for state in states:
+            connection.execute("UPDATE stations SET state_id = ? \
+            WHERE substring(station_id, 1, 2) = ?", (str(state[0]), state[1]))
     else:
         print("station file not changed")
 
