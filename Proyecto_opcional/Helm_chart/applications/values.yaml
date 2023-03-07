@@ -30,3 +30,8 @@ config:
     input_queue: "TO_STATION"
     output_queue: "TO_COUNTRY"
     image: basesdedatos2/stations_transformation
+  publisher:
+    replicas: 1
+    name: publisher
+    input_queue: "TO_PUBLISH"
+    image: basesdedatos2/publisher

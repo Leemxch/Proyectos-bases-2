@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.config.publisher.name }}
+  labels:
+    app: {{ .Values.config.publisher.name }}
+spec:
+  replicas: {{ .Values.config.publisher.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.config.publisher.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.config.publisher.name }}
+    spec:
+      containers:
+      - name: {{ .Values.config.publisher.name }}
+        image: {{ .Values.config.publisher.image }}
+        env:
+          - name: RABBITMQ
+            value: "databases-rabbitmq"
+          - name: INPUT_QUEUE
+            value: {{ .Values.config.publisher.input_queue }}
+          - name: RABBITPASS
+            valueFrom:
+              secretKeyRef:
+                name: databases-rabbitmq
+                key: rabbitmq-password
+                optional: false
+          - name: ESENDPOINT
+            value: elastic-es-default
+          - name: ESPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: elastic-es-elastic-user
+                key: elastic
+                optional: false
+          - name: ESINDEXDAILY
+            value: 'daily'
+          - name: ESINDEXWEATHER
+            value: 'weather-data'
+          - name: MARIAHOST
+            value: "databases-mariadb"
+          - name: MARIAPORT
+            value: "3306"
+          - name: MARIAUSER
+            value: "user"
+          - name: MARIADB
+            value: "weather"
+          - name: MARIAPASS
+            valueFrom:
+              secretKeyRef:
+                name: databases-mariadb
+                key: mariadb-password
+                optional: false
