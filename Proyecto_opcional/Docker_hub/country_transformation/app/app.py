@@ -39,7 +39,7 @@ def callback(ch, method, properties, body):
         # Actualiza tabla files
         print("updating database")
         cursor.execute("UPDATE files SET file_state= 'CON_PAIS'\
-                            WHERE file_name = ?", (nameFile))
+                            WHERE file_name = ?", (nameFile,))
         mariaDatabase.commit()
         # Manda mensaje al siguiente componente
         msg = "{\"data\": [ {\"msg\":\"" + fileName + "\", \"hostname\": \"" + HOSTNAME + "\"}]}"
