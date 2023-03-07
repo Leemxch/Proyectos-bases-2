@@ -20,39 +20,25 @@ def callback(ch, method, properties, body):
         dicDataList = dicFile['data']
         print("adding values")
         for i in range(0, len(dicDataList)):
-            station_id = dicDataList[i]['id']
-            if len(station_id) < 11:
-                continue
-            # agrega mes y año
-            dicDataList[i]['month'] = dicDataList[i]['date'][0:2]
-            dicDataList[i]['year'] = dicDataList[i]['date'][2:6]
-            # agrega valores del station_id
-            dicDataList[i]['FIPS_country_code'] = station_id[0:2]
-            dicDataList[i]['network_code'] = station_id[2]
-            dicDataList[i]['real_station_id'] = station_id[3:len(station_id)]
-            # agrega nombre del tipo
-            tipo = dicDataList[i]['element']
-            if tipo == "PRCP":
-                dicDataList[i]['type_name'] = "Precipitation (tenths of mm)"
-            elif tipo == "SNOW":
-                dicDataList[i]['type_name'] = "Snowfall (mm)"
-            elif tipo == "SNWD":
-                dicDataList[i]['type_name'] = "Snow depth (mm)"
-            elif tipo == "TMAX":
-                dicDataList[i]['type_name'] = "Maximum temperature (tenths of degrees C)"
-            elif tipo == "TMIN":
-                dicDataList[i]['type_name'] = "Minimum temperature (tenths of degrees C)"
-            elif tipo == "RHMX":
-                dicDataList[i]['type_name'] = "Maximum relative humidity for the day (percent)"
-            else:
-                dicDataList[i]['type_name'] = ""
+            country_code = dicDataList[i]['FIPS_country_code']
+            cursor.execute("SELECT country_name FROM countries WHERE country_acronym = ?", (country_code))
+            country_name_list = cursor.fetchall()
+            dicDataList[i]['country_name'] = ""
+            for country_name in country_name_list:
+                dicDataList[i]['country_name'] = country_name
+            state = dicDataList[i]['state']
+            cursor.execute("SELECT state_name FROM states WHERE state_acronym = ?", (state))
+            state_name_list = cursor.fetchall()
+            dicDataList[i]['state_name'] = ""
+            for state_name in state_name_list:
+                dicDataList[i]['state_name'] = state_name
         dicFile['data'] = dicDataList
         # Actualiza datos en Elasticsearch
         print("updating Elasticsearch")
         client.index(index = ESINDEXDAILY, id = nameFile, document = dicFile)
         # Actualiza tabla files
         print("updating database")
-        cursor.execute("UPDATE files SET file_state= 'TRANSFORMADO'\
+        cursor.execute("UPDATE files SET file_state= 'CON_PAIS'\
                             WHERE file_name = ?", (nameFile))
         mariaDatabase.commit()
         # Manda mensaje al siguiente componente
@@ -105,6 +91,6 @@ channel = connection.channel()
 channel.queue_declare(queue = INPUT_QUEUE)
 channel.queue_declare(queue = OUTPUT_QUEUE)
 channel.basic_consume(queue = INPUT_QUEUE, on_message_callback = callback, auto_ack = True)
-print('Esperando mensaje del parser')
+print('Esperando mensaje del station transformation')
 channel.start_consuming()
 
