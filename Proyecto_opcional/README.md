@@ -270,10 +270,97 @@ channel_input.start_consuming()
 
 
 #### CronJobs
-
+```
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: countries
+spec:
+  schedule: "0 0 * * *" # Run once a day
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: countries
+            image: basesdedatos2/countries
+            env:
+            - name: MARIAHOST
+              value: "databases-mariadb"
+            - name: MARIAPORT
+              value: "3306"
+            - name: MARIAUSER
+              value: "user"
+            - name: MARIADB
+              value: "weather"
+            - name: MARIAPASS
+              valueFrom:
+                secretKeyRef:
+                  name: databases-mariadb
+                  key: mariadb-password
+                  optional: false
+          restartPolicy: OnFailure
+```
 
 #### Deployments
-
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processor
+  labels:
+    app: processor
+spec:
+  replicas: {{ .Values.config.processor.replicas }}
+  selector:
+    matchLabels:
+      app: processor
+  template:
+    metadata:
+      labels:
+        app: processor
+    spec:
+      containers:
+      - name: processor
+        image: basesdedatos2/processor
+        env:
+          - name: RABBITMQ
+            value: "databases-rabbitmq"
+          - name: INPUT_QUEUE
+            value: {{ .Values.config.processor.input_queue }}
+          - name: OUTPUT_QUEUE
+            value: {{ .Values.config.processor.output_queue }}
+          - name: RABBITPASS
+            valueFrom:
+              secretKeyRef:
+                name: databases-rabbitmq
+                key: rabbitmq-password
+                optional: false
+          - name: MARIAHOST
+            value: "databases-mariadb"
+          - name: MARIAPORT
+            value: "3306"
+          - name: MARIAUSER
+            value: "user"
+          - name: MARIADB
+            value: "weather"
+          - name: MARIAPASS
+            valueFrom:
+              secretKeyRef:
+                name: databases-mariadb
+                key: mariadb-password
+                optional: false
+          - name: ESENDPOINT
+            value: elastic-es-default
+          - name: ESPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: elastic-es-elastic-user
+                key: elastic
+                optional: false
+          - name: ESINDEXDAILY
+            value: daily 
+```
 
 ### Pruebas unitarias
 #### CronJobs

@@ -3,12 +3,13 @@
 
 config:
   orchestrator:
-    name: producer
+    replicas: 1
+    name: orchestrator
     output_queue: "TO_PROCESS"
     image: basesdedatos2/orchestrator
   processor:
     replicas: 1
-    name: consumer
+    name: processor
     input_queue: "TO_PROCESS"
     output_queue: "TO_PARSE" 
     image: basesdedatos2/processor
