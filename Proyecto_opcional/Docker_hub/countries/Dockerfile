@@ -8,5 +8,7 @@ COPY app/. .
 
 RUN pip install --upgrade pip
 RUN pip3 install --no-cache-dir -r requirements.txt
+RUN ls
+RUN python -u test.py
 
 CMD [ "python", "-u", "./app.py"]
