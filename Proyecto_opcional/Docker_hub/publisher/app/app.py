@@ -6,10 +6,10 @@ import mariadb
 from elasticsearch import Elasticsearch
 
 # Rabbit MQ env variables
-RABBIT_MQ=os.getenv('RABBITMQ')
-RABBIT_MQ_PASSWORD=os.getenv('RABBITPASS')
+RABBIT_MQ = os.getenv('RABBITMQ')
+RABBIT_MQ_PASSWORD = os.getenv('RABBITPASS')
 # Elasticsearch env variables
-INPUT_QUEUE=os.getenv('INPUT_QUEUE')
+INPUT_QUEUE = os.getenv('INPUT_QUEUE')
 ESENDPOINT = os.getenv('ESENDPOINT')
 ESPASSWORD = os.getenv('ESPASSWORD')
 ESINDEXWEATHER = os.getenv('ESINDEXWEATHER')
@@ -21,19 +21,24 @@ MARIAUSER = os.getenv('MARIAUSER')
 MARIAPASS = os.getenv('MARIAPASS')
 MARIADB = os.getenv('MARIADB')
 
+
 def callback(ch, method, properties, body):
     print('Recibiendo msj de cola.')
     json_object = json.loads(body)
-    fileName= json_object['data'][0]['msg']
-    data = getFile(fileName)
-    elasticFiles(fileName, data)
-    mariaFiles(fileName)
+    fileName = json_object['data'][0]['msg']
+    nameFile = fileName[0:len(fileName)]
+    station_id = nameFile.replace('.dly', '')
+    data = getFile(nameFile)
+    elasticFiles(nameFile, data)
+    mariaFiles(station_id)
     print("Archivo procesado: ", fileName)
 
+
 def getFile(fileName):
-    try:
-        file = client.get(index = ESINDEXDAILY, id=fileName)
-        print(file['_source']["contents"])
+    file = client.get(index=ESINDEXDAILY, id=fileName)
+    if file['found']:
+        print("Found file in Elasticsearch: " + str(fileName) + ".")
+        print(file['_source'])
         latitude = file['_source']["latitude"]
         longitude = file['_source']["longitude"]
         month = file['_source']["month"]
@@ -41,30 +46,32 @@ def getFile(fileName):
         temp = [latitude, longitude, month, year]
         print(temp)
         return temp
-    except:
+    else:
         print("Archivo no encontrado: ", fileName)
         return []
 
-def elasticFiles(fileName,map):
+
+def elasticFiles(fileName, map):
     doc = {
         "fileName": fileName,
         "latitude": map[0],
         "longitude": map[1],
-        "date": str(map[3])+"-"+str(map[4])+"-01"
+        "date": str(map[3]) + "-" + str(map[4]) + "-01"
     }
-    try: # try to create the index ESINDEXWEATHER
+    try:  # try to create the index ESINDEXWEATHER
         client.indices.create(index=ESINDEXWEATHER, mappings=doc)
-    except: # ignore if exists
+    except:  # ignore if exists
         pass
     # Remove the index daily in Elasticsearch
-    client.delete(index=ESINDEXDAILY, id= fileName)
+    client.delete(index=ESINDEXDAILY, id=fileName)
+
 
 def mariaFiles(fileName):
     # Mariadb connection
     mariaDatabase = mariadb.connect(
         host=MARIAHOST,
         port=int(MARIAPORT),
-        user=MARIAUSER, 
+        user=MARIAUSER,
         password=MARIAPASS,
         database=MARIADB
     )
@@ -80,15 +87,16 @@ def mariaFiles(fileName):
     mariaDatabase.commit()
     mariaDatabase.close()
 
+
 credentials_input = pika.PlainCredentials('user', RABBIT_MQ_PASSWORD)
 parameters_input = pika.ConnectionParameters(host=RABBIT_MQ, credentials=credentials_input)
 connection_input = pika.BlockingConnection(parameters_input)
 channel = connection_input.channel()
 channel.queue_declare(queue=INPUT_QUEUE)
-channel.basic_consume(queue=INPUT_QUEUE, on_message_callback=callback, auto_ack=True) 
+channel.basic_consume(queue=INPUT_QUEUE, on_message_callback=callback, auto_ack=True)
 
 # Elasticsearch connection
-client = Elasticsearch("https://" + ESENDPOINT + ":9200", basic_auth = ("elastic", ESPASSWORD), verify_certs = False)
+client = Elasticsearch("https://" + ESENDPOINT + ":9200", basic_auth=("elastic", ESPASSWORD), verify_certs=False)
 
 print("Waiting...")
 channel.start_consuming()
