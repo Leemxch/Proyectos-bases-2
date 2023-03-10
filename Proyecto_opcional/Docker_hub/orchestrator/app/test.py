@@ -34,8 +34,21 @@ class test(unittest.TestCase):
             password="gmlsdrhn2",
             database="weather"
         )
-        files = ('ACW00011604.dly','ACW00011647.dly','AE000041196.dly')
+
         connection = mariaDatabase.cursor()
+
+        files = ('ACW00011604.dly','ACW00011647.dly','AE000041196.dly')
+
+        connection.execute("CREATE TABLE IF NOT EXISTS files(\
+                                       file_id int auto_increment,\
+                                       file_name varchar(255) not null,\
+                                       file_url varchar(255) not null,\
+                                       file_date varchar(255) not null,\
+                                       file_state varchar(255) not null,\
+                                       file_md5 varchar(255) not null,\
+                                       primary key(file_id)\
+                       )")
+
         for file in files:
             hitFile = 1
             url = 'https://www.ncei.noaa.gov/pub/data/ghcn/daily/all'
