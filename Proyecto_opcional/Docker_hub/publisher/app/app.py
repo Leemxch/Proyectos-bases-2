@@ -36,7 +36,9 @@ def getFile(fileName):
         print(file['_source']["contents"])
         latitude = file['_source']["latitude"]
         longitude = file['_source']["longitude"]
-        temp = [latitude, longitude]
+        month = file['_source']["month"]
+        year = file['_source']["year"]
+        temp = [latitude, longitude, month, year]
         print(temp)
         return temp
     except:
@@ -47,7 +49,8 @@ def elasticFiles(fileName,map):
     doc = {
         "fileName": fileName,
         "latitude": map[0],
-        "longitude": map[1]
+        "longitude": map[1],
+        "date": str(map[3])+"-"+str(map[4])+"-01"
     }
     try: # try to create the index ESINDEXWEATHER
         client.indices.create(index=ESINDEXWEATHER, mappings=doc)

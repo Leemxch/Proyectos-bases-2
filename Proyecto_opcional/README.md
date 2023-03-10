@@ -389,7 +389,7 @@ Luego de procesar la información, se verifica la conexión directa a la base de
 Por último, para verificar que los datos se encuentren bien y correctos, se puede ingresar a la base de datos de forma manual para observar la inserción correcta de las tablas. De esta manera, se pueden realizar cambios en su comportamiento si es necesario. 
 
 ###### Resultado
-Durante esta prueba unitaria, se verificó si en la lista procesada con los datos del URL de NOAA se encuentra o no el último dato relevante para validar el funcionamiento apropieado del mismo. Luego, siguiendo el flujo lógico, verifica si los datos de prueba de una base de datos local funciona de manera correcta para finalizar con su propósito.  
+Durante esta prueba unitaria, se verificó si en la lista procesada con los datos del URL de NOAA se encuentra o no el último dato relevante para validar el funcionamiento apropiado del mismo. Luego, siguiendo el flujo lógico, verifica si los datos de prueba de una base de datos local funciona de manera correcta para finalizar con su propósito.  
 ![Resultado](countriesResult.PNG)
 
 ##### Stations
@@ -424,6 +424,14 @@ Dentro de la prueba, se agregaron try-except para poder ejecutar el archivo sin 
 
 ##### Publisher
 
+
+## Conclusiones
+* (min 10)
+* 
+
+## Recomendaciones
+* (min 10)
+* 
 
 ## Referencias
 * [Repositorio del proyecto](https://github.com/Leemxch/Proyectos-bases-2/tree/main/Proyecto_opcional)
