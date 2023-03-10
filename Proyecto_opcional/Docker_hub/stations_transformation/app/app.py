@@ -142,7 +142,6 @@ def callback(ch, method, properties, body):
         msg = "{\"data\": [ {\"msg\":\"" + result + "\", \"hostname\": \"" + hostname + "\"}]}"
         channel_output.basic_publish(exchange='', routing_key=OUTPUT_QUEUE, body=msg)
 
-        connection.close()
         mariaDatabase.commit()
         mariaDatabase.close()
 

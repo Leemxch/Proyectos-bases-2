@@ -1,4 +1,3 @@
-
 # Proyecto opcional: WindyUI
 
 > Integrantes:
@@ -363,6 +362,22 @@ spec:
 ```
 
 ### Pruebas unitarias
+Las pruebas unitarias se realizaron con la librería “unittest” para poder probar las componentes, el cual se le agregaron otras líneas de código al Dockerfile para poder utilizarlas al tener el visto bueno (sin errores).
+```
+FROM python:3.6-buster
+
+RUN apt-get update && apt-get -yy install libmariadb-dev
+
+WORKDIR /app
+
+COPY app/. .
+
+RUN pip install --upgrade pip
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+CMD [ "python", "-u", "./app.py"]
+```
+
 #### CronJobs
 ##### Countries/states
 La prueba unitaria del CronJob countries/states se realizará de forma local, dado que no ocupa muchas dependencias del clúster y la mayor parte de su proceso está dentro de la base de datos de MariaDB junto con la extracción de datos de la página NOAA. 
@@ -374,6 +389,7 @@ Luego de procesar la información, se verifica la conexión directa a la base de
 Por último, para verificar que los datos se encuentren bien y correctos, se puede ingresar a la base de datos de forma manual para observar la inserción correcta de las tablas. De esta manera, se pueden realizar cambios en su comportamiento si es necesario. 
 
 ###### Resultado
+Durante esta prueba unitaria, se verificó si en la lista procesada con los datos del URL de NOAA se encuentra o no el último dato relevante para validar el funcionamiento apropieado del mismo. Luego, siguiendo el flujo lógico, verifica si los datos de prueba de una base de datos local funciona de manera correcta para finalizar con su propósito.  
 ![Resultado](countriesResult.PNG)
 
 ##### Stations
@@ -388,6 +404,19 @@ Por último, para verificar que los datos se encuentren bien y correctos, se pue
 
 ##### Parser
 
+###### Resultado
+![Resultado](parserResult.PNG)
+
+##### Elements transformation
+
+
+##### Stations transformation
+
+
+##### Country transformation 
+
+
+##### Publisher
 
 
 ## Referencias
