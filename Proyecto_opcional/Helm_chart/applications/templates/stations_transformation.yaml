@@ -41,9 +41,9 @@ spec:
                 key: mariadb-password
                 optional: false
           - name: INPUT_QUEUE
-            value: {{ .Values.config.elements_transformation.input_queue }}
+            value: {{ .Values.config.stations_transformation.input_queue }}
           - name: OUTPUT_QUEUE
-            value: {{ .Values.config.elements_transformation.output_queue }}
+            value: {{ .Values.config.stations_transformation.output_queue }}
           - name: ESENDPOINT
             value: elastic-es-default
           - name: ESPASSWORD
