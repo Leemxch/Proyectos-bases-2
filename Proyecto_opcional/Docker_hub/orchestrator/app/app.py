@@ -80,7 +80,6 @@ for file in files:
     connection.execute("SELECT file_name from files WHERE file_name=?", (file,))
     # existe coincidencia = actualiza fecha
     if connection.rowcount != 0 and connection.rowcount != -1:
-        for i in connection:
             connection.execute("UPDATE files SET file_date=now() WHERE file_name=?", (file,))
             hitFile = 0
     # NO existe coincidencia = ingresa a la base de datos
