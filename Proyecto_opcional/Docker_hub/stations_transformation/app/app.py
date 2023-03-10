@@ -4,56 +4,6 @@ import pika
 import json
 from elasticsearch import Elasticsearch
 
-# Busqueda en elasticsearch, devuelve el id de elasticsearch.
-# def elasticsearch(message):
-#    station_e_id = client.search(
-#        index="daily",
-#        body={
-#            "query": {
-#                "bool": {
-#                    "must": {
-#                        "match_phrase": {
-#                            "station_id": message,
-#                        }
-#                    },
-#                },
-#            },
-#        }, filter_path=['hits.hits._id']
-#    )
-#    return station_e_id
-
-
-# Actualiza el mapping dentro del indice.
-# def elasticupdate():
-#    oldmapping = client.indices.get_mapping(index='daily')
-#    mapping = {
-#        "properties": {
-#            "station_id": {"type": "text"},
-#            "date": {"type": "text"},
-#            "month": {"type": "text"},
-#            "year": {"type": "text"},
-#            "type": {"type": "text"},
-#            "value": {"type": "text"},
-#            "nflag": {"type": "text"},
-#            "qflag": {"type": "text"},
-#            "FIPS_country_code": {"type": "text"},
-#            "network_code": {"type": "text"},
-#            "real_station_id": {"type": "text"},
-#            "type_name": {"type": "text"},
-#            "latitude": {"type": "text"},
-#            "longitude": {"type": "text"},
-#            "elevation": {"type": "text"},
-#            "state": {"type": "text"},
-#            "name": {"type": "text"},
-#            "gsn_flag": {"type": "text"},
-#            "hcn_flag": {"type": "text"},
-#            "wmo_id": {"type": "text"},
-#        }
-#    }
-#    if oldmapping != mapping:
-#        client.indices.put_mapping(body=mapping, index='daily')
-
-
 # Environment variables
 hostname = os.getenv('HOSTNAME')
 RABBIT_MQ = os.getenv('RABBITMQ')
@@ -69,10 +19,6 @@ MARIAPORT = os.getenv('MARIAPORT')
 MARIAUSER = os.getenv('MARIAUSER')
 MARIAPASS = os.getenv('MARIAPASS')
 MARIADB = os.getenv('MARIADB')
-
-
-
-
 
 # Elasticsearch connection
 client = Elasticsearch("https://" + ESENDPOINT + ":9200", basic_auth=("elastic", ESPASSWORD), verify_certs=False)
@@ -109,13 +55,9 @@ def callback(ch, method, properties, body):
             "SELECT * FROM stations WHERE station_id = ?",
             (station_id,))
 
-
-
         print("Adding values...")
         # trae valores de la base de datos
         for j in range(0, len(dicDataList)):
-            if j < 11:
-                continue
             for i in connection:
                 print('EXISTE RECORD')
                 # agrega valores del station_id
@@ -145,6 +87,9 @@ def callback(ch, method, properties, body):
         connection.close()
         mariaDatabase.commit()
         mariaDatabase.close()
+    else:
+        print("File with id %s missing in Elasticsearch index %s" % (nameFile, ESINDEXDAILY))
+    print("-----------------------------------------------------------------")
 
 
 # RabbitMQ connection
