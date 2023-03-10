@@ -403,8 +403,14 @@ Durante esta prueba unitaria, se verificó si en la lista procesada con los dato
 
 
 ##### Parser
+La prueba unitaria se realizó de forma local, sin embargo, se encontraron problemas a la hora de realizar las pruebas ya que el software no se tiene instalado aparte del clúster. 
+
+Con respecto a la ejecución del componente, el sistema espera a que le llegue un mensaje en la cola designada de RabbitMQ del componente processor. De esta forma, extrae la información del mensaje que es el nombre del archivo para ubicar en el índice de Elasticsearch. 
+
+Luego, se llama a la función "getFile" para poder extraer la información almacenada del contenido URL del respectivo archivo y procesarlo en una lista. Por consiguiente, la información procesada se manda a la función "elasticFiles" para poder agregar la información a un nuevo índice "daily" y el archivo del índice procesado. Por último, se actualiza el estado del archivo en la base de datos MariaDB. 
 
 ###### Resultado
+Dentro de la prueba, se agregaron try-except para poder ejecutar el archivo sin errores, ya que, como se mencionó anteriormente, el software de Elasticsearch no se encontraba disponible de forma local. Sin embargo, fuera de esto, las demás funciones no tuvieron problemas. 
 ![Resultado](parserResult.PNG)
 
 ##### Elements transformation
