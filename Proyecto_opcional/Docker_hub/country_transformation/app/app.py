@@ -21,13 +21,13 @@ def callback(ch, method, properties, body):
         print("adding values")
         for i in range(0, len(dicDataList)):
             country_code = dicDataList[i]['FIPS_country_code']
-            cursor.execute("SELECT country_name FROM countries WHERE country_acronym = ?", (country_code))
+            cursor.execute("SELECT country_name FROM countries WHERE country_acronym = ?", (country_code,))
             country_name_list = cursor.fetchall()
             dicDataList[i]['country_name'] = ""
             for country_name in country_name_list:
                 dicDataList[i]['country_name'] = country_name
             state = dicDataList[i]['state']
-            cursor.execute("SELECT state_name FROM states WHERE state_acronym = ?", (state))
+            cursor.execute("SELECT state_name FROM states WHERE state_acronym = ?", (state,))
             state_name_list = cursor.fetchall()
             dicDataList[i]['state_name'] = ""
             for state_name in state_name_list:
