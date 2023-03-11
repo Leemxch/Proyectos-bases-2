@@ -20,6 +20,10 @@ def callback(ch, method, properties, body):
         dicDataList = dicFile['data']
         print("adding values")
         for i in range(0, len(dicDataList)):
+            station_id = dicDataList[i]['id']
+            if len(station_id) < 11:
+                continue
+            # agrega valores
             country_code = dicDataList[i]['FIPS_country_code']
             cursor.execute("SELECT country_name FROM countries WHERE country_acronym = ?", (country_code,))
             country_name_list = cursor.fetchall()
